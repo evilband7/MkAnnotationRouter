@@ -164,10 +164,9 @@ class Module
     }
     
     private function methodToActionName($methodName){
-        $methodName = strtolower($methodName);
-        $methodName = preg_replace('/action$/', '', $methodName);
         $filter = new CamelCaseToDash();
-        return $filter->filter($methodName);
+        $methodName = preg_replace('/Action$/', '', $methodName);
+        return strtolower($filter->filter($methodName));
     }
     
     
