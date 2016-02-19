@@ -4,14 +4,11 @@
   "version" : "1.0.1",
   "require" : {
     "php" : ">=5.5",
-    "zendframework/zendframework" : "*",
+    "zendframework/zend-filter" : "*",
+    "zendframework/zend-modulemanager" : "*",
     "doctrine/common" : "*",
     "evilband7/php-common-util" : "*"
   },
-  "repositories" : [ {
-    "type" : "composer",
-    "url" : "https://repo.fury.io/evilband7/"
-  } ],
   "require-dev" : {
     "phpunit/phpunit" : "*"
   },
