@@ -1,7 +1,6 @@
 {
   "name" : "evilband7/mk-annotation-router-module",
   "description" : "ZF2 Module which provide routing via annotation",
-  "version" : "1.0.1",
   "require" : {
     "php" : ">=5.5",
     "zendframework/zend-filter" : "*",
