@@ -30,7 +30,6 @@ class Module
         $reader                     = new AnnotationReader();
         
         // GENERATE PROJECT CONTROLLER CONFIG
-        
         if($mkAnnotationRouterConfig['generate_project_controller_config']){
             $moduleDirs = $mkAnnotationRouterConfig['module_directory']; 
             $moduleDirs = rtrim($moduleDirs, '/');
@@ -53,8 +52,9 @@ class Module
         }
         
         // GENERATE ROUTES
-        
         $routeToMergs = array();
+        $methodRoutesToMerg = array();
+        
         foreach ( $controllers['invokables'] as $controllerAlias => $controllerClass ){
             
             $simpleControllerAlias = $controllerAlias;
@@ -64,59 +64,64 @@ class Module
                 $simpleControllerAlias        = preg_replace('/Controller$/', '', "{$moduleName}{$simpleControllerAlias}") ;
             }
             
-
+            $routeAnnotationClazz = new \ReflectionClass('MkAnnotationRouter\Annotation\Route');
             $controllerClazz = new \ReflectionClass($controllerClass);
             /* @var $classRoute Route */
-            $classRoute         = $reader->getClassAnnotation($controllerClazz, 'MkAnnotationRouter\Annotation\Route');
-            $classRouteArr      = array();
-            if($classRoute){
-                $classRoute->name       = empty($classRoute->name) ? $simpleControllerAlias : $classRoute->name;
-                $classRoute->defaults   = array_merge(array('controller'=> $controllerAlias, 'action'=> 'index' ), $classRoute->defaults);
-                $classRoute->route      = empty($classRoute->route) ? $simpleControllerAlias : $classRoute->route;
-                $classRouteArr          = array( $classRoute->name  =>  $this->tranformRoute($classRoute) );
+            
+            $classRoutes        = array();
+            foreach ($reader->getClassAnnotations($controllerClazz) as $classRoute){
+                if ( $routeAnnotationClazz->isInstance($classRoute) ){
+                    $classRoute->name       = empty($classRoute->name) ? $simpleControllerAlias : $classRoute->name;
+                    $classRoute->defaults   = array_merge(array('controller'=> $controllerAlias, 'action'=> 'index' ), $classRoute->defaults);
+                    $classRoute->route      = empty($classRoute->route) ? $simpleControllerAlias : $classRoute->route;
+                    $classRouteArr          = $this->tranformRoute($classRoute);
+                    
+                    if( $classRoute->extends ){
+                        $classRouteArr      = $this->extendsRoute($classRoute->extends , $classRouteArr);
+                    }
+                    $classRoutes[]          = [ 'annotation' => $classRoute , 'route' => $classRouteArr  ];
+                    $routeToMergs[]         = $classRouteArr;
+                }
             }
             
-            $methods = array();
-            $methodRoutesToMerg = array();
+            
             do{
-                $methods = array_merge($controllerClazz->getMethods( \ReflectionMethod::IS_PUBLIC));
-                
-                foreach ($methods as $method){
+                foreach ($controllerClazz->getMethods( \ReflectionMethod::IS_PUBLIC) as $method){
                     if (preg_match('/Action$/', $method->getName())) {
                         /* @var $methodRoute Route */
-                        $methodRoute = $reader->getMethodAnnotation($method, 'MkAnnotationRouter\Annotation\Route');
-                        
-                        if($methodRoute)
-                        {
-                            $actionName = $this->methodToActionName($method->getName());
-                            $methodRoute->name = empty($methodRoute->name) ? $actionName : $methodRoute->name;
-                            $methodRoute->route = empty($methodRoute->route) ? $actionName : $methodRoute->route;
-                            
-                            if ($classRoute && ! $methodRoute->extends) {
-                                $methodRoute->defaults = array_merge(array('action' => $actionName ), $methodRoute->defaults);
-                                $methodRouteArr = array( $methodRoute->name => $this->tranformRoute($methodRoute));
-                                $classRouteArr[$classRoute->name]['child_routes'] = array_merge($classRouteArr[$classRoute->name]['child_routes'], $methodRouteArr);
-                            } else{
-                                $methodRoute->defaults = array_merge(array( 'controller' => $controllerAlias, 'action'=> $actionName ), $methodRoute->defaults);
-                                $methodRouteArr = array( $methodRoute->name  =>  $this->tranformRoute($methodRoute) );
-                                if( $methodRoute->extends ){
-                                    $methodRouteArr = $this->extendsRoute($methodRoute->extends , $methodRouteArr);
+                        foreach ($reader->getMethodAnnotations($method) as $methodRoute){
+                            if ( $routeAnnotationClazz->isInstance($methodRoute) ){
+                                
+                                $actionName = $this->methodToActionName($method->getName());
+                                $methodRoute->name = empty($methodRoute->name) ? $actionName : $methodRoute->name;
+                                $methodRoute->route = empty($methodRoute->route) ? $actionName : $methodRoute->route;
+                                
+                                if (!empty($classRoutes) && !$methodRoute->extends) {
+                                    
+                                    $methodRoute->defaults = array_merge(array('action' => $actionName ), $methodRoute->defaults);
+                                    $methodRouteArr = $this->tranformRoute($methodRoute);
+                                    foreach ($classRoutes as $cr){
+                                        $classRoute = $cr['annotation'];
+                                        $extends = empty($classRoute->extends) ? $classRoute->name : $classRoute->extends . '/' . $classRoute->name;
+                                        $methodRoutesToMerg[] = $this->extendsRoute($extends, $methodRouteArr);
+                                    }
+                                } else{
+                                    $methodRoute->defaults = array_merge(array( 'controller' => $controllerAlias, 'action'=> $actionName ), $methodRoute->defaults);
+                                    $methodRouteArr = $this->tranformRoute($methodRoute);
+                                    if( $methodRoute->extends ){
+                                        $methodRouteArr = $this->extendsRoute($methodRoute->extends , $methodRouteArr);
+                                    }
+                                    $methodRoutesToMerg[] = $methodRouteArr;
                                 }
-                                $methodRoutesToMerg[] = $methodRouteArr; 
                             }
                         }
                     }
                 }
                 
                 $controllerClazz = $controllerClazz->getParentClass();
+                
             }while( $controllerClazz && $controllerClazz->getName() != 'Zend\Mvc\Controller\AbstractActionController' );
             
-            if($classRoute){
-                if ( !empty($classRoute->extends ) ) {
-                    $classRouteArr = $this->extendsRoute($classRoute->extends , $classRouteArr);
-                }
-                $routeToMergs[] = $classRouteArr;
-            }
             $routeToMergs = array_merge($routeToMergs, $methodRoutesToMerg);
         }
         
@@ -150,16 +155,17 @@ class Module
     private function tranformRoute(Route $route){
         
         return array(
-            'type' => $route->type,
-            'options' => array(
-                'route' => $route->route,
-                'constraints' => $route->constraints,
-                'defaults' => $route->defaults,
-            ),
-            'may_terminate' => $route->mayTerminate,
-            'priority' => $route->priority,
-            'child_routes' => array()
-            
+            $route->name => array(
+                'type' => $route->type,
+                'options' => array(
+                    'route' => $route->route,
+                    'constraints' => $route->constraints,
+                    'defaults' => $route->defaults,
+                ),
+                'may_terminate' => $route->mayTerminate,
+                'priority' => $route->priority,
+                'child_routes' => array()
+            )
         );
     }
     
