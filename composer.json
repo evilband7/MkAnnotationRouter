@@ -3,6 +3,7 @@
   "description" : "ZF2 Module which provide routing via annotation",
   "require" : {
     "php" : ">=5.5",
+    "zendframework/zend-stdlib" : "*",
     "zendframework/zend-filter" : "*",
     "zendframework/zend-modulemanager" : "*",
     "doctrine/common" : "*",

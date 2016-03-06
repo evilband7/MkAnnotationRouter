@@ -7,6 +7,7 @@ use Doctrine\Common\Annotations\AnnotationReader;
 use MkAnnotationRouter\Annotation\Route;
 use Zend\Filter\Word\CamelCaseToDash;
 use PhpCommonUtil\Util\Assert;
+use Zend\Stdlib\ArrayUtils;
 
 class Module
 {
@@ -125,10 +126,9 @@ class Module
             $routeToMergs = array_merge($routeToMergs, $methodRoutesToMerg);
         }
         
-        $finalAnnotationRoutes = call_user_func_array('array_merge_recursive', $routeToMergs);
-
-        $config['router']['routes'] = array_merge_recursive($config['router']['routes'], $finalAnnotationRoutes);
+        $finalAnnotationRoutes = call_user_func_array('array_replace_recursive', $routeToMergs);
         
+        $config['router']['routes'] = ArrayUtils::merge($config['router']['routes'], $finalAnnotationRoutes);
         $configListener->setMergedConfig($config);
     }
     
@@ -139,16 +139,15 @@ class Module
         $extendArr  = explode('/', $extends );
         foreach ($extendArr as $extend){
             Assert::isTrue( !empty($extend) , $extends . ' is not valid parent route ');
-            if ( null === $target ){
+            if ( !is_array($target) ){
                 $target = &$result;
-            }else{
-                $target = &$target['child_routes'];
             }
             
             $target[$extend] = array();
             $target[$extend]['child_routes'] = array();
+            $target = &$target[$extend]['child_routes'];
         }
-        $target[$extend]['child_routes'] = $childRoute;
+        $target = $childRoute;
         return $result;
     }
     
