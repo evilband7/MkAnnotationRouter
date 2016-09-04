@@ -1,5 +1,5 @@
 <?php
-namespace MkAnnotationRouter\Annotation;
+namespace ZendAnnotationRouter\Annotation;
 
 /**
  * @Annotation

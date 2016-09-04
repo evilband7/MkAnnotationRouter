@@ -1,1 +1,0 @@
-<?php include __DIR__ . '/src/MkAnnotationRouter/Module.php';

@@ -1,10 +1,10 @@
 <?php
-namespace MkAnnotationRouter;
+namespace ZendAnnotationRouter;
 
 use Zend\ModuleManager\ModuleManager;
 use Zend\ModuleManager\ModuleEvent;
 use Doctrine\Common\Annotations\AnnotationReader;
-use MkAnnotationRouter\Annotation\Route;
+use ZendAnnotationRouter\Annotation\Route;
 use Zend\Filter\Word\CamelCaseToDash;
 use PhpCommonUtil\Util\Assert;
 use Zend\Stdlib\ArrayUtils;
@@ -65,7 +65,7 @@ class Module
                 $simpleControllerAlias        = preg_replace('/Controller$/', '', "{$moduleName}{$simpleControllerAlias}") ;
             }
             
-            $routeAnnotationClazz = new \ReflectionClass('MkAnnotationRouter\Annotation\Route');
+            $routeAnnotationClazz = new \ReflectionClass('ZendAnnotationRouter\Annotation\Route');
             $controllerClazz = new \ReflectionClass($controllerClass);
             /* @var $classRoute Route */
             

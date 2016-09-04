@@ -14,8 +14,8 @@
   },
   "license" : "Apache License 2.0",
   "autoload" : {
-    "psr-0" : {
-      "MkAnnotationRouter\\" : "MkAnnotationRouter/src/"
+    "psr-4" : {
+      "ZendAnnotationRouter\\" : "ZendAnnotationRouter/src/ZendAnnotationRouter/"
     }
   },
   "type" : "library",
