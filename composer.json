@@ -1,18 +1,18 @@
 {
-  "name" : "evilband7/mk-annotation-router-module",
+  "name" : "evilband7/zend-annotation-router",
   "description" : "ZF2 Module which provide routing via annotation",
   "require" : {
     "php" : ">=5.5",
-    "zendframework/zend-stdlib" : "*",
-    "zendframework/zend-filter" : "*",
-    "zendframework/zend-modulemanager" : "*",
-    "doctrine/common" : "*",
-    "evilband7/php-common-util" : "*"
+    "zendframework/zend-stdlib" : "~3.0 || ~2.7",
+    "zendframework/zend-filter" : "~3.0 || ~2.7",
+    "zendframework/zend-modulemanager" : "~3.0 || ~2.7",
+    "doctrine/common" : "~2.5",
+    "evilband7/php-common-util" : "~0.1"
   },
   "require-dev" : {
     "phpunit/phpunit" : "*"
   },
-  "license" : "Apache License 2.0",
+  "license" : "MIT",
   "autoload" : {
     "psr-4" : {
       "ZendAnnotationRouter\\" : "ZendAnnotationRouter/src/ZendAnnotationRouter/"
